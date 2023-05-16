@@ -6,6 +6,8 @@ import { initRoutes } from './routes/index.js';
 
 const app = express();
 
+app.use(express.json());
+
 initRoutes(app)
 
 const PORT = process.env.PORT

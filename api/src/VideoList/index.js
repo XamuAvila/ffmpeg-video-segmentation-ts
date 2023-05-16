@@ -2,6 +2,10 @@ import multer from 'multer';
 import { exec } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
+import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { stdin } from 'process';
+
+const regex = /file:(\\+)/g;
 
 async function storeVideo(req, res) {
   const tempFilePath = req.file.path;
@@ -22,7 +26,11 @@ async function storeVideo(req, res) {
     convertVideos(folderName, 640, 480, res)
     extractAudio(folderName);
 
-    res.status(200).send('File uploaded and saved successfully!');
+    res.status(200).json({
+      message: "File successfully saved",
+      id: folderName
+    });
+
   } catch (err) {
     console.error(err);
     res.status(500).send('Oops! Something went wrong');
@@ -30,12 +38,12 @@ async function storeVideo(req, res) {
 }
 
 function getShPath(filename) {
-  const regex = /file:(\\+)/g;
+
   return path.join(import.meta.url, '..', filename).replace(regex, '').replace(/\\/g, '/');
 }
 
 async function extractAudio(folderName) {
-  const regex = /file:(\\+)/g;
+
   const prefixFileName = `./uploads/${folderName}/${folderName}`
   const shPath = getShPath('extract.sh');
   const fullServerPath = path.join(import.meta.url, '..', '..', prefixFileName);
@@ -43,7 +51,7 @@ async function extractAudio(folderName) {
   const outputVideoPath = `${fullServerPath.toString()}_audio.mp4`.replace(regex, '').replace(/\\/g, '/');
 
   try {
-    const { stdout, stderr } = await exec(`bash ${shPath} ${savedVideoPath} ${outputVideoPath}`);
+    const { stdout, stderr } = exec(`bash ${shPath} ${savedVideoPath} ${outputVideoPath}`);
 
     console.log(stdout);
     console.error(stderr);
@@ -53,7 +61,7 @@ async function extractAudio(folderName) {
 }
 
 async function convertVideos(folderName, width, height, res) {
-  const regex = /file:(\\+)/g;
+
   const prefixFileName = `./uploads/${folderName}/${folderName}`
   const fullServerPath = path.join(import.meta.url, '..', '..', prefixFileName)
   const savedVideoPath = `${fullServerPath.toString()}.mp4`.replace(regex, '').replace(/\\/g, '/');
@@ -77,6 +85,38 @@ async function convertVideos(folderName, width, height, res) {
   }
 }
 
+async function convertVideo(req, res){
+  const videoId = req.body.id;
+  const prefixPath = `./src/uploads/${videoId}/${videoId}`;
+  const manifestPath = `./src/uploads/${videoId}/manifest`;
+  const audioFilePath = `${prefixPath}_audio.mp4`
+
+  if(existsSync(manifestPath)){
+    unlinkSync(manifestPath);
+  }else{
+    mkdirSync(manifestPath);
+  }
+
+  const shPath = getShPath('convertManifest.sh');
+
+  const {stdout, kill} = await exec(`bash ${shPath} ${prefixPath} ${audioFilePath} ${manifestPath}`);
+
+  console.info("WRITING MANIFEST DATA");
+
+  stdout.on('data', (data)=>{
+    console.log(data)
+  })
+
+  stdin.on('data', (data)=>{
+    console.log(data);
+  })
+
+  stdin.on('close', ()=>{
+    res.status(200).send('Manifest generated successfully');
+  })
+}
+
 export {
-  storeVideo
+  storeVideo,
+  convertVideo
 }
