@@ -38,7 +38,6 @@ async function storeVideo(req, res) {
 }
 
 function getShPath(filename) {
-
   return path.join(import.meta.url, '..', filename).replace(regex, '').replace(/\\/g, '/');
 }
 
@@ -85,33 +84,38 @@ async function convertVideos(folderName, width, height, res) {
   }
 }
 
-async function convertVideo(req, res){
+async function convertVideo(req, res) {
   const videoId = req.body.id;
   const prefixPath = `./src/uploads/${videoId}/${videoId}`;
   const manifestPath = `./src/uploads/${videoId}/manifest`;
   const audioFilePath = `${prefixPath}_audio.mp4`
 
-  if(existsSync(manifestPath)){
+  if (existsSync(manifestPath)) {
     unlinkSync(manifestPath);
-  }else{
+  } else {
     mkdirSync(manifestPath);
   }
 
   const shPath = getShPath('convertManifest.sh');
 
-  const {stdout, kill} = await exec(`bash ${shPath} ${prefixPath} ${audioFilePath} ${manifestPath}`);
+  const mp4BoxProcess = exec(`bash ${shPath} ${prefixPath} ${audioFilePath} ${manifestPath}`);
 
   console.info("WRITING MANIFEST DATA");
 
-  stdout.on('data', (data)=>{
+  mp4BoxProcess.stdout.on('data', (data) => {
     console.log(data)
   })
 
-  stdin.on('data', (data)=>{
+  mp4BoxProcess.stdin.on('data', (data) => {
     console.log(data);
   })
 
-  stdin.on('close', ()=>{
+  mp4BoxProcess.stderr.on('data', (msg) => {
+    console.log(msg.toString());
+  })
+
+  mp4BoxProcess.on('close', () => {
+    mp4BoxProcess.kill();
     res.status(200).send('Manifest generated successfully');
   })
 }
