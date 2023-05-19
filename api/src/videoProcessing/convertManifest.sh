@@ -1,36 +1,14 @@
 #!/bin/bash
 
-# Check if at least one argument was passed when running the script
-if [ $# -lt 1 ]; then
-    echo "Please provide the input video name as the first argument."
-    echo "You may optionally provide the audio file name as the second argument."
-    echo "You may also optionally provide the output directory path as the third argument."
-    exit 1
+# Check if there are 5 arguments
+if [ $# -ne 5 ]; then
+  echo "Usage: $0 <480p_file> <720p_file> <1080p_file> <audio_file> <output_dir>"
+  exit 1
 fi
 
-# Assign the input video name to a variable
-input_video=$1
+# Set the output directory and MPD file name
+OUTPUT_DIR="$5"
+MPD_OUTPUT_FILE="$OUTPUT_DIR/video.mpd"
 
-# If two arguments were passed, assign the second argument to the audio file name variable
-if [ $# -ge 2 ]; then
-    audio_file=$2
-else
-    # If only one argument was passed, assume the default audio file name
-    audio_file=audio.mp4
-fi
-
-# If a third argument was provided, use it as the output directory
-if [ $# -eq 3 ]; then
-    output_dir=$3
-else
-    # If no third argument was provided, use the current working directory as the output directory
-    output_dir=.
-fi
-
-# Run the MP4Box command with the specified parameters, input video, and audio file
-MP4Box -dash 2000 -frag 2000 -rap -profile dashavc264:live \
-    -out ${output_dir}/video.mpd \
-    ${input_video}_1080.mp4#video:id=${input_video}_1080 \
-    ${input_video}_720.mp4#video:id=${input_video}_720 \
-    ${input_video}_480.mp4#video:id=${input_video}_480 \
-    ${audio_file}#audio:id=audio_1
+# Generate the multi-bitrate MPD file using MP4Box
+MP4Box -dash 5000 -rap -profile dashavc264:live -out "$MPD_OUTPUT_FILE" "$1#video" "$2#video" "$3#video" "$4#audio"

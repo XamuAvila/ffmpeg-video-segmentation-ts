@@ -62,10 +62,8 @@ async function getVideo(req, res, next) {
     res.header('Content-Disposition', `attachment; filename=video.mpd`);
 
     // Create a read stream for the mpd file
-    const mpdStream = fs.createReadStream(filename);
-
-    // Pipe the stream to the response object
-    mpdStream.pipe(res);
+    const fullPath = path.resolve(filename);
+    res.sendFile(fullPath);
 }
 
 export {

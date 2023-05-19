@@ -90,15 +90,13 @@ async function convertVideo(req, res) {
   const manifestPath = `./src/uploads/${videoId}/manifest`;
   const audioFilePath = `${prefixPath}_audio.mp4`
 
-  if (existsSync(manifestPath)) {
-    unlinkSync(manifestPath);
-  } else {
+  if (!existsSync(manifestPath)) {
     mkdirSync(manifestPath);
-  }
+  } 
 
   const shPath = getShPath('convertManifest.sh');
 
-  const mp4BoxProcess = exec(`bash ${shPath} ${prefixPath} ${audioFilePath} ${manifestPath}`);
+  const mp4BoxProcess = exec(`bash ${shPath} ${prefixPath}_480.mp4 ${prefixPath}_720.mp4 ${prefixPath}_1080.mp4 ${prefixPath}_audio.mp4   ${manifestPath}`);
 
   console.info("WRITING MANIFEST DATA");
 
