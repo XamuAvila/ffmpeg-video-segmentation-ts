@@ -3,6 +3,14 @@
 
 Service using NodeJs and React to create a video stream using a fragmented video dealing with buffers, bitrate and resolution.
 
+# Configuration
+* Inside api/dash-js-react folder run 
+  ```
+   npm install
+  ```
+* After run npm run start inside of both
+  * Player will be running on 3000
+  * Backend will be running on 4000 (env)
 
 ## Routes
 
